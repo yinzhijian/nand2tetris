@@ -40,4 +40,33 @@ CHIP CPU {
 
     PARTS:
     // Put your code here:
+    //ALU process
+    ALU(x=d,y=am,zx=instruction[11],nx=instruction[10],zy=instruction[9],ny=instruction[8],f=instruction[7],no=instruction[6],out=outM,out=outA,out=outD,zr=zr,ng=ng);
+    // According to instruction[3..5],we can decide where to output
+    Mux(a=instruction[3],b=false,sel=isA,out=writeM);
+
+    //A instruction, Set instruction[0..14] to A Register
+    Not(in=instruction[15],out=isA);
+    Or(a=isA,b=instruction[5],out=loadA);
+    Mux16(a[0..14]=instruction[0..14],b=outA,sel=instruction[15],out=inA);
+    ARegister(in=inA,load=loadA,out=a,out[0..14]=addressM);
+    //decide D value
+    Mux(a=instruction[4],b=false,sel=isA,out=loadD);
+    DRegister(in=outD,load=loadD,out=d);
+    //decide am value
+    Mux16(a=a,b=inM,sel=instruction[12],out=am);
+
+    //decide whether jump
+    Not(in=ng,out=ge);
+    Not(in=zr,out=ne);
+    And(a=ge,b=ne,out=g);
+    
+    And(a=instruction[2],b=ng,out=j1);
+    And(a=instruction[1],b=zr,out=j2);
+    And(a=instruction[0],b=g,out=j3);
+    Or(a=j1,b=j2,out=j12);
+    Or(a=j12,b=j3,out=j123);
+    Mux(a=j123,b=false,sel=isA,out=pcLoad);
+    //decide PC value
+    PC(in=a,load=pcLoad,inc=true,reset=reset,out[0..14]=pc);
 }

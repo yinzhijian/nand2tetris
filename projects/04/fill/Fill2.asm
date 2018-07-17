@@ -12,52 +12,35 @@
 // the screen should remain fully clear as long as no key is pressed.
 
 // Put your code here.
+(START)
+//loop
+@SCREEN
+D=A
+@R0
+M=D//i=16384
 (LOOP)
+@R0
+D=M
+@24575//if i-24575>= 0
+D=D-A
+@START
+D;JGT //finish one round
 @24576
 D=M
 @BLACK
 D;JGT
-//set white
-@24575
-D=A
-@R0 //i=256*32+16384
-M=D
-(WHITE_LOOP)
+//white
 @R0
-D=M
-@16384//if i-16384 > 0
-D=D-A
-@LOOP
-D;JLT //clean finish
-@32768
-D=A
-@R0
-M=M-1//i=i-1
 A=M
-M=D
-@WHITE_LOOP
+M=0
+@INC
 0;JMP
 (BLACK)
-@24576
-D=A
-@R0 //i=256*32+16384
-M=D
-(BLACK_LOOP)
 @R0
-@R0
-D=M
-@16384//if i-16384 > 0
-D=D-A
-@LOOP
-D;JLT //clean finish
-@32768
-D=A
-@R0
-M=M-1//i=i-1
 A=M
-M=D
-@BLACK_LOOP
-0;JMP
+M=-1
+(INC)
+@R0
+M=M+1//i=i+1
 @LOOP
 0;JMP
-
