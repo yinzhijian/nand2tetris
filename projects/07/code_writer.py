@@ -15,6 +15,11 @@ class CodeWriter:
         self.io_start_index = 16384
         self.initStackPoint()
         self.index = 0
+        self.segment_dict = {'local':'LCL',
+                            'argument':'ARG',
+                            'this':'THIS',
+                            'that':'THAT',
+                            'temp':'5',};
 
     def initStackPoint(self):
         self.lines.append("@"+str(self.stack_start_index))
@@ -22,11 +27,13 @@ class CodeWriter:
         self.lines.append("@SP")
         self.lines.append("M=D")
 
-    def popToInnerRegister(self,index):
+    def popToD(self):
         self.lines.append("@SP")
         self.lines.append("D=M-1")
         self.lines.append("AM=D")
         self.lines.append("D=M")
+    def popToInnerRegister(self,index):
+        self.popToD()
         self.lines.append("@"+index)
         self.lines.append("M=D")
 
@@ -105,11 +112,45 @@ class CodeWriter:
             self.lines.append("("+operator.lower()+"_end"+str(self.index)+")")
             self.index += 1
 
+    def putSegmentIndexToA(self,segment,index):
+        self.lines.append("@"+index)
+        self.lines.append("D=A")
+        self.lines.append("@"+segment)
+        self.lines.append("A=M+D")
+    def pushSegmentValueToStack(self,segment,index):
+        self.putSegmentIndexToA(segment,index)
+        self.lines.append("D=M")
+        self.push()
+
     def writePushPop(self,command,segment,index):
+        fixed = {"temp":5,"pointer":3,"static":16}
         if command == C_PUSH:
             if segment == "constant":
                 self.lines.append("@"+index)
                 self.lines.append("D=A")
                 self.push()
+            elif segment in fixed.keys():
+                r = str(fixed[segment]+int(index))
+                self.lines.append("@R"+r)
+                self.lines.append("D=M")
+                self.push()
+            else:
+                seg = self.segment_dict[segment]
+                self.pushSegmentValueToStack(seg,index)
+        elif command == C_POP:
+            if segment in fixed.keys():
+                r = str(fixed[segment]+int(index))
+                self.popToInnerRegister("R"+r)
+            else:
+                seg = self.segment_dict[str(segment)]
+                self.putSegmentIndexToA(seg,index)
+                self.lines.append("D=A")
+                self.lines.append("@R13")
+                self.lines.append("M=D")
+                self.popToD()
+                self.lines.append("@R13")
+                self.lines.append("A=M")
+                self.lines.append("M=D")
+            
         pass
 
